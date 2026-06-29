@@ -6,22 +6,23 @@ const Database = require("better-sqlite3");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// cria pasta data se não existir
+const SMM_API_URL = process.env.SMM_API_URL || "https://measmm.com/api/v2";
+const SMM_API_KEY = process.env.SMM_API_KEY || "23ddeq349Prdxazd1223avvcz";
+
+// banco local
 const dbFolder = path.join(__dirname, "data");
 
 if (!fs.existsSync(dbFolder)) {
   fs.mkdirSync(dbFolder, { recursive: true });
 }
 
-// conecta banco
 const db = new Database(path.join(dbFolder, "database.db"));
 
-// middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// tabela usuários
+// tabelas
 db.prepare(`
 CREATE TABLE IF NOT EXISTS usuarios (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +33,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
 )
 `).run();
 
-// tabela pedidos
 db.prepare(`
 CREATE TABLE IF NOT EXISTS pedidos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   servico TEXT,
   link TEXT,
   quantidade INTEGER,
+  pedido_api_id TEXT,
   status TEXT DEFAULT 'pendente',
   criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
 )
@@ -79,19 +80,14 @@ app.post("/login", (req, res) => {
 
 // DASHBOARD
 app.get("/dashboard", (req, res) => {
-  const pedidos = db.prepare("SELECT * FROM pedidos").all();
-
-  let lista = pedidos.map(p =>
-    `<li>${p.servico} - ${p.quantidade} - ${p.status}</li>`
-  ).join("");
-
   res.send(`
-    <h1>Dashboard SMM</h1>
-    <p>Painel funcionando 🚀</p>
-    <a href="/usuarios">Ver usuários</a><br><br>
-    <a href="/pedidos">Ver pedidos (JSON)</a>
-    <h2>Pedidos:</h2>
-    <ul>${lista}</ul>
+    <h1>Painel SMM 🚀</h1>
+    <ul>
+      <li><a href="/services">Listar serviços</a></li>
+      <li><a href="/balance">Ver saldo API</a></li>
+      <li><a href="/pedidos">Ver pedidos</a></li>
+      <li><a href="/usuarios">Ver usuários</a></li>
+    </ul>
   `);
 });
 
@@ -105,71 +101,122 @@ app.post("/cadastro", (req, res) => {
       VALUES (?, ?, ?)
     `).run(nome, email, senha);
 
-    res.json({
-      status: "ok",
-      mensagem: "Usuário cadastrado com sucesso"
-    });
-
+    res.json({ status: "ok" });
   } catch (error) {
-    res.status(500).json({
-      status: "erro",
-      mensagem: error.message
-    });
+    res.status(500).json({ erro: error.message });
   }
 });
 
-// NOVO PEDIDO
-app.post("/pedido", (req, res) => {
+// LISTAR SERVIÇOS DA API
+app.get("/services", async (req, res) => {
+  try {
+    const response = await fetch(SMM_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        key: SMM_API_KEY,
+        action: "services"
+      })
+    });
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+// VER SALDO
+app.get("/balance", async (req, res) => {
+  try {
+    const response = await fetch(SMM_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        key: SMM_API_KEY,
+        action: "balance"
+      })
+    });
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+// CRIAR PEDIDO REAL
+app.post("/pedido", async (req, res) => {
   try {
     const { usuario_id, servico, link, quantidade } = req.body;
 
+    const response = await fetch(SMM_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        key: SMM_API_KEY,
+        action: "add",
+        service: servico,
+        link: link,
+        quantity: quantidade
+      })
+    });
+
+    const apiData = await response.json();
+
     db.prepare(`
-      INSERT INTO pedidos (usuario_id, servico, link, quantidade)
-      VALUES (?, ?, ?, ?)
-    `).run(usuario_id, servico, link, quantidade);
+      INSERT INTO pedidos (usuario_id, servico, link, quantidade, pedido_api_id)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      usuario_id,
+      servico,
+      link,
+      quantidade,
+      apiData.order || null
+    );
 
-    res.json({
-      status: "ok",
-      mensagem: "Pedido criado com sucesso"
-    });
+    res.json(apiData);
 
   } catch (error) {
-    res.status(500).json({
-      status: "erro",
-      mensagem: error.message
-    });
+    res.status(500).json({ erro: error.message });
   }
 });
 
-// LISTA PEDIDOS
+// STATUS DO PEDIDO
+app.get("/status/:id", async (req, res) => {
+  try {
+    const response = await fetch(SMM_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        key: SMM_API_KEY,
+        action: "status",
+        order: req.params.id
+      })
+    });
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+// PEDIDOS LOCAIS
 app.get("/pedidos", (req, res) => {
-  try {
-    const pedidos = db.prepare("SELECT * FROM pedidos").all();
-    res.json(pedidos);
-
-  } catch (error) {
-    res.status(500).json({
-      status: "erro",
-      mensagem: error.message
-    });
-  }
+  const pedidos = db.prepare("SELECT * FROM pedidos").all();
+  res.json(pedidos);
 });
 
-// LISTA USUÁRIOS
+// USUÁRIOS
 app.get("/usuarios", (req, res) => {
-  try {
-    const usuarios = db.prepare("SELECT * FROM usuarios").all();
-    res.json(usuarios);
-
-  } catch (error) {
-    res.status(500).json({
-      status: "erro",
-      mensagem: error.message
-    });
-  }
+  const usuarios = db.prepare("SELECT * FROM usuarios").all();
+  res.json(usuarios);
 });
 
-// inicia servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
