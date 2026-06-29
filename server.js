@@ -6,10 +6,9 @@ const Database = require("better-sqlite3");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// pasta do banco
+// cria pasta data se não existir
 const dbFolder = path.join(__dirname, "data");
 
-// cria a pasta se não existir
 if (!fs.existsSync(dbFolder)) {
   fs.mkdirSync(dbFolder, { recursive: true });
 }
@@ -20,11 +19,9 @@ const db = new Database(path.join(dbFolder, "database.db"));
 // middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// arquivos públicos
 app.use(express.static(path.join(__dirname, "public")));
 
-// cria tabela usuários
+// tabela usuários
 db.prepare(`
 CREATE TABLE IF NOT EXISTS usuarios (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +32,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 )
 `).run();
 
-// cria tabela pedidos
+// tabela pedidos
 db.prepare(`
 CREATE TABLE IF NOT EXISTS pedidos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,22 +45,57 @@ CREATE TABLE IF NOT EXISTS pedidos (
 )
 `).run();
 
-// rota inicial
+// HOME
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "login.html"));
+  res.redirect("/login");
 });
 
-// login
+// LOGIN
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "login.html"));
+  res.send(`
+    <h1>Login Plataforma SMM</h1>
+    <form method="POST" action="/login">
+      <input name="email" placeholder="Digite seu e-mail" /><br><br>
+      <input name="senha" type="password" placeholder="Digite sua senha" /><br><br>
+      <button type="submit">Entrar</button>
+    </form>
+  `);
 });
 
-// dashboard
+// PROCESSA LOGIN
+app.post("/login", (req, res) => {
+  const { email, senha } = req.body;
+
+  const usuario = db.prepare(`
+    SELECT * FROM usuarios WHERE email = ? AND senha = ?
+  `).get(email, senha);
+
+  if (!usuario) {
+    return res.send("Usuário ou senha inválidos");
+  }
+
+  res.redirect("/dashboard");
+});
+
+// DASHBOARD
 app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "dashboard.html"));
+  const pedidos = db.prepare("SELECT * FROM pedidos").all();
+
+  let lista = pedidos.map(p =>
+    `<li>${p.servico} - ${p.quantidade} - ${p.status}</li>`
+  ).join("");
+
+  res.send(`
+    <h1>Dashboard SMM</h1>
+    <p>Painel funcionando 🚀</p>
+    <a href="/usuarios">Ver usuários</a><br><br>
+    <a href="/pedidos">Ver pedidos (JSON)</a>
+    <h2>Pedidos:</h2>
+    <ul>${lista}</ul>
+  `);
 });
 
-// cadastro
+// CADASTRO
 app.post("/cadastro", (req, res) => {
   try {
     const { nome, email, senha } = req.body;
@@ -86,7 +118,7 @@ app.post("/cadastro", (req, res) => {
   }
 });
 
-// criar pedido
+// NOVO PEDIDO
 app.post("/pedido", (req, res) => {
   try {
     const { usuario_id, servico, link, quantidade } = req.body;
@@ -109,7 +141,7 @@ app.post("/pedido", (req, res) => {
   }
 });
 
-// listar pedidos
+// LISTA PEDIDOS
 app.get("/pedidos", (req, res) => {
   try {
     const pedidos = db.prepare("SELECT * FROM pedidos").all();
@@ -123,7 +155,7 @@ app.get("/pedidos", (req, res) => {
   }
 });
 
-// listar usuários
+// LISTA USUÁRIOS
 app.get("/usuarios", (req, res) => {
   try {
     const usuarios = db.prepare("SELECT * FROM usuarios").all();
@@ -137,7 +169,7 @@ app.get("/usuarios", (req, res) => {
   }
 });
 
-// iniciar servidor
+// inicia servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
