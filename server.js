@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const SMM_API_URL = process.env.SMM_API_URL || "https://measmm.com/api/v2";
-const SMM_API_KEY = process.env.SMM_API_KEY || "23ddeq349Prdxazd1223avvcz";
+const SMM_API_KEY = process.env.SMM_API_KEY || "2b16135f4703990d0caf22c4537aaea3";
 
 // banco local
 const dbFolder = path.join(__dirname, "data");
