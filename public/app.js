@@ -1,0 +1,18 @@
+let token = localStorage.getItem('token') || '';
+let services = [];
+const brl = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+async function api(path, opts={}){const r=await fetch(path,{...opts,headers:{'Content-Type':'application/json',...(opts.headers||{}),...(token?{Authorization:'Bearer '+token}:{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Erro');return j;}
+function showAuth(){landing.classList.add('hidden');app.classList.add('hidden');auth.classList.remove('hidden')}
+function showApp(){if(!token)return showAuth();landing.classList.add('hidden');auth.classList.add('hidden');app.classList.remove('hidden');bootApp()}
+function tab(id){['newOrder','deposit','history'].forEach(x=>document.getElementById(x).classList.add('hidden'));document.getElementById(id).classList.remove('hidden'); if(id==='history') loadHistory();}
+async function init(){const c=await api('/api/config');appName.textContent=c.appName;pixKey.value=c.pixKey;pixName.value=c.pixName;if(token)showApp()}init();
+async function login(){try{const j=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email:loginEmail.value,password:loginPass.value})});token=j.token;localStorage.setItem('token',token);showApp()}catch(e){authMsg.textContent=e.message}}
+async function register(){try{const j=await api('/api/auth/register',{method:'POST',body:JSON.stringify({name:regName.value,email:regEmail.value,password:regPass.value,referral:regRef.value})});token=j.token;localStorage.setItem('token',token);showApp()}catch(e){authMsg.textContent=e.message}}
+function logout(){localStorage.removeItem('token');token='';location.reload()}
+async function bootApp(){const me=await api('/api/me');balance.textContent=brl(me.user.balance);refCode.textContent=me.user.referralCode||'---';const s=await api('/api/services');services=s.services;service.innerHTML=services.map(x=>`<option value="${x.id}">${x.category||'Geral'} • ${x.name} • ${brl(x.rate)}/1000 • min ${x.min}</option>`).join('')||'<option>Nenhum serviço importado</option>';updateEstimate();}
+service?.addEventListener('change',updateEstimate);qty?.addEventListener('input',updateEstimate);
+function updateEstimate(){const s=services.find(x=>x.id==service.value);const q=Number(qty.value||0);estimate.textContent=s&&q?`Total estimado: ${brl((s.rate*q)/1000)} | Permitido: ${s.min} a ${s.max}`:'';}
+async function createOrder(){try{orderMsg.textContent='Enviando...';const j=await api('/api/orders',{method:'POST',body:JSON.stringify({serviceId:service.value,link:orderLink.value,quantity:qty.value})});orderMsg.innerHTML='<span class="ok">Pedido enviado #' + j.orderId + '</span>';orderLink.value='';qty.value='';await bootApp()}catch(e){orderMsg.textContent=e.message}}
+async function deposit(){try{const j=await api('/api/deposits',{method:'POST',body:JSON.stringify({amount:depAmount.value,note:depNote.value})});depMsg.innerHTML='<span class="ok">Solicitação criada #' + j.depositId + '. Envie o comprovante para aprovação.</span>'}catch(e){depMsg.textContent=e.message}}
+async function loadHistory(){const o=await api('/api/orders');orders.innerHTML=table(o.orders,['id','service_name','link','quantity','charge','status','created_at']);const d=await api('/api/deposits');deposits.innerHTML=table(d.deposits,['id','amount','status','note','created_at']);}
+function table(rows,cols){if(!rows.length)return '<p class="muted">Nada encontrado.</p>';return `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c.includes('charge')||c==='amount'?brl(r[c]):(r[c]||'')}</td>`).join('')}</tr>`).join('')}</tbody></table>`}

@@ -1,0 +1,1 @@
+<div class="nav"><a href="/" class="brand">SMM<span>PRO</span></a><div><a href="/">Serviços</a><% if(user){ %><a href="/dashboard">Minha conta</a><% if(user.role==='admin'){ %><a href="/admin">Admin</a><% } %><a href="/logout">Sair</a><% } else { %><a href="/login">Entrar</a><a href="/register">Criar conta</a><% } %></div></div>
