@@ -6,8 +6,8 @@ const Database = require("better-sqlite3");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SMM_API_URL = process.env.SMM_API_URL || "https://measmm.com/api/v2";
-const SMM_API_KEY = process.env.SMM_API_KEY || "2b16135f4703990d0caf22c4537aaea3";
+const SMM_API_URL = process.env.SMM_API_URL;
+const SMM_API_KEY = process.env.SMM_API_KEY;
 
 // banco local
 const dbFolder = path.join(__dirname, "data");
