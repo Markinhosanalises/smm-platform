@@ -1,1 +1,162 @@
-<!doctype html><html><head><title>Dashboard</title><link rel="stylesheet" href="/style.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><%- include('partials_header') %><div class="container"><h1>Minha conta</h1><div class="card"><h2>Saldo: <%=money(user.balance)%></h2><p><%=user.reseller?'Conta revendedor ativa: desconto aplicado automaticamente.':'Conta cliente padrão.'%></p></div><div class="grid" style="padding:20px 0"><div class="card"><h2>Adicionar saldo via Pix</h2><p class="muted">Faça o Pix e envie o comprovante/identificação. O admin aprova e o saldo entra.</p><form method="post" action="/deposit"><label>Valor</label><input name="amount" type="number" min="10" step="0.01" required><label>Comprovante ou observação</label><input name="proof" placeholder="Ex: Pix feito em nome de..."><button>Solicitar recarga</button></form></div><div class="card"><h2>Suporte</h2><form method="post" action="/ticket"><label>Assunto</label><input name="subject" required><label>Mensagem</label><textarea name="message" required></textarea><button>Abrir chamado</button></form></div></div><h2>Pedidos recentes</h2><table><tr><th>ID</th><th>Serviço</th><th>Qtd</th><th>Valor</th><th>Status</th></tr><% orders.forEach(o=>{ %><tr><td>#<%=o.id%></td><td><%=o.service_name%></td><td><%=o.quantity%></td><td><%=money(o.charge)%></td><td><%=o.status%></td></tr><% }) %></table><h2>Recargas</h2><table><tr><th>ID</th><th>Valor</th><th>Status</th><th>Data</th></tr><% deposits.forEach(d=>{ %><tr><td>#<%=d.id%></td><td><%=money(d.amount)%></td><td><%=d.status%></td><td><%=d.created_at%></td></tr><% }) %></table></div></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <title>Dashboard | Fênix Social</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+
+<body>
+<%- include('partials_header') %>
+
+<main class="dashboard">
+  <div class="container">
+
+    <div class="dash-hero">
+      <div>
+        <span class="tag">PAINEL DO CLIENTE</span>
+        <h1>Minha conta</h1>
+        <p>Gerencie seu saldo, solicitações, recargas e suporte em um só lugar.</p>
+      </div>
+
+      <a href="/order" class="btn-primary">Nova solicitação</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <p>Saldo disponível</p>
+        <h2><%= money(user.balance) %></h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Pedidos recentes</p>
+        <h2><%= orders.length %></h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Recargas</p>
+        <h2><%= deposits.length %></h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Tipo de conta</p>
+        <h2><%= user.reseller ? 'Revendedor' : 'Cliente' %></h2>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <section class="card premium-card">
+        <h2>Adicionar saldo via Pix</h2>
+        <p class="muted">
+          Solicite uma recarga e envie a identificação do pagamento. Após aprovação, o saldo entra na sua conta.
+        </p>
+
+        <form method="post" action="/deposit">
+          <label>Valor da recarga</label>
+          <input name="amount" type="number" min="10" step="0.01" placeholder="Ex: 50.00" required>
+
+          <label>Comprovante ou observação</label>
+          <input name="proof" placeholder="Ex: Pix feito em nome de...">
+
+          <button class="btn-primary">Solicitar recarga</button>
+        </form>
+      </section>
+
+      <section class="card premium-card">
+        <h2>Suporte</h2>
+        <p class="muted">
+          Precisa de ajuda? Abra um chamado e acompanhe o retorno pelo painel.
+        </p>
+
+        <form method="post" action="/ticket">
+          <label>Assunto</label>
+          <input name="subject" placeholder="Ex: Dúvida sobre pedido" required>
+
+          <label>Mensagem</label>
+          <textarea name="message" placeholder="Descreva sua dúvida..." required></textarea>
+
+          <button class="btn-primary">Abrir chamado</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="card table-card">
+      <div class="table-head">
+        <div>
+          <h2>Pedidos recentes</h2>
+          <p class="muted">Acompanhe suas últimas solicitações.</p>
+        </div>
+        <a href="/order" class="btn-outline">Novo pedido</a>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <tr>
+            <th>ID</th>
+            <th>Serviço</th>
+            <th>Qtd</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+
+          <% if(orders.length === 0){ %>
+            <tr>
+              <td colspan="5">Nenhum pedido encontrado.</td>
+            </tr>
+          <% } %>
+
+          <% orders.forEach(o=>{ %>
+            <tr>
+              <td>#<%= o.id %></td>
+              <td><%= o.service_name %></td>
+              <td><%= o.quantity %></td>
+              <td><%= money(o.charge) %></td>
+              <td>
+                <span class="status-badge"><%= o.status %></span>
+              </td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <div class="table-head">
+        <div>
+          <h2>Recargas</h2>
+          <p class="muted">Histórico das solicitações de saldo.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <tr>
+            <th>ID</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Data</th>
+          </tr>
+
+          <% if(deposits.length === 0){ %>
+            <tr>
+              <td colspan="4">Nenhuma recarga encontrada.</td>
+            </tr>
+          <% } %>
+
+          <% deposits.forEach(d=>{ %>
+            <tr>
+              <td>#<%= d.id %></td>
+              <td><%= money(d.amount) %></td>
+              <td><span class="status-badge"><%= d.status %></span></td>
+              <td><%= d.created_at %></td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+</body>
+</html>
