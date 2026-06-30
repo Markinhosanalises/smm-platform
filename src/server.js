@@ -43,11 +43,9 @@ try {
 
 function calcPrice(service, qty, user) {
   let price = (service.price_per_1000 * qty) / 1000;
-
   if (user?.reseller) {
     price = price * (1 - (Number(process.env.RESELLER_DISCOUNT_PERCENT || 25) / 100));
   }
-
   return Math.max(0.01, Number(price.toFixed(2)));
 }
 
@@ -127,7 +125,6 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
-/* ROTA TEMPORÁRIA PARA CRIAR ADMIN */
 app.get('/criar-admin', (req, res) => {
   const email = 'admin@fenixsocial.com';
   const senha = '12345678';
@@ -215,7 +212,6 @@ app.post('/deposit', requireAuth, (req, res) => {
 
 app.get('/order/:id', requireAuth, (req, res) => {
   const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
-
   if (!service) return res.redirect('/dashboard');
 
   res.render('order', {
@@ -277,8 +273,7 @@ app.post('/order/:id', requireAuth, async (req, res) => {
   }
 
   const tx = db.transaction(() => {
-    db.prepare('UPDATE users SET balance=balance-? WHERE id=?')
-      .run(charge, user.id);
+    db.prepare('UPDATE users SET balance=balance-? WHERE id=?').run(charge, user.id);
 
     db.prepare(`
       INSERT INTO orders(
@@ -317,11 +312,7 @@ app.post('/ticket', requireAuth, (req, res) => {
   db.prepare(`
     INSERT INTO tickets(user_id, subject, message)
     VALUES(?, ?, ?)
-  `).run(
-    req.session.user.id,
-    req.body.subject,
-    req.body.message
-  );
+  `).run(req.session.user.id, req.body.subject, req.body.message);
 
   res.redirect('/dashboard');
 });
@@ -352,6 +343,87 @@ app.get('/admin/services', requireAdmin, (req, res) => {
   res.render('admin_services', {
     services: db.prepare('SELECT * FROM services ORDER BY id DESC').all()
   });
+});
+
+app.post('/admin/import-services', requireAdmin, async (req, res) => {
+  try {
+    const data = await callSmm({ action: 'services' });
+
+    if (!Array.isArray(data)) {
+      return res.send('Erro: a API não retornou uma lista de serviços.');
+    }
+
+    let importados = 0;
+    let ignorados = 0;
+
+    for (const s of data) {
+      const providerId = String(s.service || '').trim();
+
+      if (!providerId) {
+        ignorados++;
+        continue;
+      }
+
+      const exists = db.prepare('SELECT id FROM services WHERE provider_service_id=?').get(providerId);
+
+      if (exists) {
+        ignorados++;
+        continue;
+      }
+
+      const nome = s.name || 'Serviço sem nome';
+      const categoria = s.category || 'Geral';
+      const plataforma =
+        nome.toLowerCase().includes('instagram') ? 'Instagram' :
+        nome.toLowerCase().includes('tiktok') ? 'TikTok' :
+        nome.toLowerCase().includes('youtube') ? 'YouTube' :
+        nome.toLowerCase().includes('facebook') ? 'Facebook' :
+        nome.toLowerCase().includes('telegram') ? 'Telegram' :
+        'SMM';
+
+      const custo = Number(s.rate || 0);
+      const preco = Number((custo * 2).toFixed(4));
+
+      db.prepare(`
+        INSERT INTO services(
+          provider_service_id,
+          name,
+          category,
+          platform,
+          min_qty,
+          max_qty,
+          cost_per_1000,
+          price_per_1000,
+          description,
+          active
+        )
+        VALUES(?,?,?,?,?,?,?,?,?,?)
+      `).run(
+        providerId,
+        nome,
+        categoria,
+        plataforma,
+        Number(s.min || 1),
+        Number(s.max || 100000),
+        custo,
+        preco,
+        'Serviço importado automaticamente da API.',
+        1
+      );
+
+      importados++;
+    }
+
+    res.send(`
+      <h1>Importação concluída</h1>
+      <p><b>Importados:</b> ${importados}</p>
+      <p><b>Ignorados:</b> ${ignorados}</p>
+      <a href="/admin/services">Voltar para serviços</a>
+    `);
+
+  } catch (e) {
+    res.send('Erro ao importar serviços: ' + e.message);
+  }
 });
 
 app.post('/admin/services', requireAdmin, (req, res) => {
@@ -434,9 +506,7 @@ app.get('/admin/orders', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/order/:id/status', requireAdmin, (req, res) => {
-  db.prepare('UPDATE orders SET status=? WHERE id=?')
-    .run(req.body.status, req.params.id);
-
+  db.prepare('UPDATE orders SET status=? WHERE id=?').run(req.body.status, req.params.id);
   res.redirect('/admin/orders');
 });
 
@@ -463,8 +533,7 @@ app.post('/admin/deposit/:id/approve', requireAdmin, (req, res) => {
         WHERE id=?
       `).run(d.id);
 
-      db.prepare('UPDATE users SET balance=balance+? WHERE id=?')
-        .run(d.amount, d.user_id);
+      db.prepare('UPDATE users SET balance=balance+? WHERE id=?').run(d.amount, d.user_id);
     });
 
     tx();
@@ -474,9 +543,7 @@ app.post('/admin/deposit/:id/approve', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/deposit/:id/reject', requireAdmin, (req, res) => {
-  db.prepare('UPDATE deposits SET status="rejected" WHERE id=?')
-    .run(req.params.id);
-
+  db.prepare('UPDATE deposits SET status="rejected" WHERE id=?').run(req.params.id);
   res.redirect('/admin/deposits');
 });
 
