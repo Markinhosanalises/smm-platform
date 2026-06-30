@@ -34,13 +34,11 @@ app.use((req, res, next) => {
 
 try {
   const columns = db.prepare("PRAGMA table_info(users)").all();
-  const hasWhatsapp = columns.some(c => c.name === 'whatsapp');
-
-  if (!hasWhatsapp) {
+  if (!columns.some(c => c.name === 'whatsapp')) {
     db.prepare("ALTER TABLE users ADD COLUMN whatsapp TEXT").run();
   }
 } catch (e) {
-  console.log('Aviso ao verificar coluna whatsapp:', e.message);
+  console.log('Aviso banco:', e.message);
 }
 
 function calcPrice(service, qty, user) {
@@ -61,10 +59,7 @@ function getUserRole(user) {
 }
 
 app.get('/', (req, res) => {
-  const services = db
-    .prepare('SELECT * FROM services WHERE active=1 ORDER BY platform, category, name')
-    .all();
-
+  const services = db.prepare('SELECT * FROM services WHERE active=1 ORDER BY platform, category, name').all();
   res.render('home', { services });
 });
 
@@ -89,7 +84,8 @@ app.post('/login', (req, res) => {
   };
 
   req.session.save(() => {
-    res.redirect('/dashboard');
+    if (req.session.user.role === 'admin') return res.redirect('/admin');
+    return res.redirect('/dashboard');
   });
 });
 
@@ -116,9 +112,9 @@ app.post('/register', (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
 
     db.prepare(`
-      INSERT INTO users(name, email, whatsapp, password_hash)
-      VALUES(?, ?, ?, ?)
-    `).run(name, email, whatsapp || '', hash);
+      INSERT INTO users(name, email, whatsapp, password_hash, role, balance, reseller)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+    `).run(name, email, whatsapp || '', hash, 'user', 0, 0);
 
     res.redirect('/login');
 
@@ -129,6 +125,32 @@ app.post('/register', (req, res) => {
 
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
+});
+
+/* ROTA TEMPORÁRIA PARA CRIAR ADMIN */
+app.get('/criar-admin', (req, res) => {
+  const email = 'admin@fenixsocial.com';
+  const senha = '12345678';
+  const hash = bcrypt.hashSync(senha, 10);
+
+  const existe = db.prepare('SELECT * FROM users WHERE email=?').get(email);
+
+  if (existe) {
+    db.prepare('UPDATE users SET name=?, role=?, password_hash=? WHERE email=?')
+      .run('Admin Fênix', 'admin', hash, email);
+  } else {
+    db.prepare(`
+      INSERT INTO users(name, email, password_hash, role, balance, reseller)
+      VALUES(?, ?, ?, ?, ?, ?)
+    `).run('Admin Fênix', email, hash, 'admin', 0, 0);
+  }
+
+  res.send(`
+    <h1>Admin criado com sucesso</h1>
+    <p><b>Email:</b> admin@fenixsocial.com</p>
+    <p><b>Senha:</b> 12345678</p>
+    <a href="/login">Ir para login</a>
+  `);
 });
 
 app.get('/dashboard', requireAuth, (req, res) => {
@@ -192,9 +214,7 @@ app.post('/deposit', requireAuth, (req, res) => {
 });
 
 app.get('/order/:id', requireAuth, (req, res) => {
-  const service = db
-    .prepare('SELECT * FROM services WHERE id=? AND active=1')
-    .get(req.params.id);
+  const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
 
   if (!service) return res.redirect('/dashboard');
 
@@ -206,13 +226,8 @@ app.get('/order/:id', requireAuth, (req, res) => {
 });
 
 app.post('/order/:id', requireAuth, async (req, res) => {
-  const service = db
-    .prepare('SELECT * FROM services WHERE id=? AND active=1')
-    .get(req.params.id);
-
-  const user = db
-    .prepare('SELECT * FROM users WHERE id=?')
-    .get(req.session.user.id);
+  const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
+  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.user.id);
 
   if (!service) return res.redirect('/dashboard');
 
@@ -484,16 +499,7 @@ app.post('/admin/user/:id', requireAdmin, (req, res) => {
 
   res.redirect('/admin/users');
 });
-app.get('/virar-admin', requireAuth, (req, res) => {
-  db.prepare('UPDATE users SET role=? WHERE id=?')
-    .run('admin', req.session.user.id);
 
-  req.session.user.role = 'admin';
-
-  req.session.save(() => {
-    res.redirect('/admin');
-  });
-});
 app.listen(process.env.PORT || 3000, () => {
   console.log('SMM Pro rodando na porta ' + (process.env.PORT || 3000));
 });
