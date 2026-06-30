@@ -1,36 +1,106 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <title>Solicitação | Fênix Social</title>
+  <title>Nova solicitação | Fênix Social</title>
   <link rel="stylesheet" href="/style.css">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 </head>
 <body>
 <%- include('partials_header') %>
+
 <main class="dashboard">
   <div class="container">
+
     <div class="dash-hero">
       <div>
         <span class="tag"><%= service.platform %> • <%= service.category %></span>
         <h1><%= service.name %></h1>
-        <p class="muted"><%= service.description || 'Informe os dados abaixo para abrir sua solicitação.' %></p>
+        <p class="muted"><%= service.description || 'Preencha os dados abaixo para abrir uma nova solicitação.' %></p>
       </div>
-      <a class="btn-outline" href="/dashboard">Voltar</a>
+
+      <a class="btn-outline" href="/dashboard">Voltar ao painel</a>
     </div>
 
-    <div class="card form">
-      <h2>Nova solicitação</h2>
-      <p class="muted">Min: <%= service.min_qty %> • Max: <%= service.max_qty %> • Valor: <%= money(service.price_per_1000) %>/1000</p>
-      <% if(error){ %><div class="alert"><%= error %></div><% } %>
-      <form method="post">
-        <label>Link do perfil/publicação</label>
-        <input name="link" required placeholder="https://...">
-        <label>Quantidade</label>
-        <input name="quantity" type="number" min="<%= service.min_qty %>" max="<%= service.max_qty %>" required>
-        <button class="btn-primary">Confirmar solicitação</button>
-      </form>
+    <div class="dash-grid">
+      <section class="card premium-card">
+        <h2>Dados da solicitação</h2>
+        <p class="muted">
+          Confira os limites e informe o link corretamente antes de confirmar.
+        </p>
+
+        <% if(error){ %>
+          <div class="alert"><%= error %></div>
+        <% } %>
+
+        <form method="post" id="orderForm">
+          <label>Link do perfil ou publicação</label>
+          <input name="link" required placeholder="https://...">
+
+          <label>Quantidade</label>
+          <input
+            id="quantity"
+            name="quantity"
+            type="number"
+            min="<%= service.min_qty %>"
+            max="<%= service.max_qty %>"
+            required
+            placeholder="Digite a quantidade"
+          >
+
+          <button class="btn-primary">Confirmar solicitação</button>
+        </form>
+      </section>
+
+      <aside class="card premium-card">
+        <h2>Resumo</h2>
+
+        <div class="summary-line">
+          <span>Valor por 1000</span>
+          <strong><%= money(service.price_per_1000) %></strong>
+        </div>
+
+        <div class="summary-line">
+          <span>Mínimo</span>
+          <strong><%= service.min_qty %></strong>
+        </div>
+
+        <div class="summary-line">
+          <span>Máximo</span>
+          <strong><%= service.max_qty %></strong>
+        </div>
+
+        <div class="summary-total">
+          <span>Estimativa</span>
+          <strong id="estimatedValue">R$ 0,00</strong>
+        </div>
+
+        <p class="muted small-text">
+          O valor final é calculado com base na quantidade informada.
+        </p>
+      </aside>
     </div>
+
   </div>
 </main>
+
+<script>
+  const quantityInput = document.getElementById("quantity");
+  const estimatedValue = document.getElementById("estimatedValue");
+  const pricePer1000 = Number("<%= service.price_per_1000 %>");
+
+  function formatMoney(value) {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+
+  quantityInput.addEventListener("input", () => {
+    const quantity = Number(quantityInput.value || 0);
+    const total = (quantity / 1000) * pricePer1000;
+    estimatedValue.textContent = formatMoney(total);
+  });
+</script>
+
 </body>
 </html>
