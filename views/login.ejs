@@ -1,1 +1,50 @@
-<!doctype html><html><head><title>Entrar</title><link rel="stylesheet" href="/style.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><%- include('partials_header') %><div class="container form card"><h1>Entrar</h1><% if(error){ %><div class="alert"><%=error%></div><% } %><form method="post"><label>E-mail</label><input name="email" required><label>Senha</label><input name="password" type="password" required><button>Entrar</button></form></div></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <title>Entrar | Fênix Social</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+
+<body class="auth-page">
+
+  <div class="auth-wrapper">
+    <div class="auth-brand">
+      <a href="/" class="auth-logo">🔥 Fênix <span>Social</span></a>
+      <h1>Bem-vindo de volta</h1>
+      <p>Acesse seu painel para gerenciar suas solicitações digitais com segurança e praticidade.</p>
+
+      <div class="auth-benefits">
+        <div>✔ Painel simples e organizado</div>
+        <div>✔ Histórico e acompanhamento</div>
+        <div>✔ Ambiente seguro para clientes</div>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <h2>Entrar na conta</h2>
+      <p class="auth-subtitle">Informe seus dados para continuar.</p>
+
+      <% if(error){ %>
+        <div class="alert"><%=error%></div>
+      <% } %>
+
+      <form method="post">
+        <label>E-mail</label>
+        <input name="email" type="email" placeholder="seu@email.com" required>
+
+        <label>Senha</label>
+        <input name="password" type="password" placeholder="Sua senha" required>
+
+        <button class="btn-primary full">Entrar</button>
+      </form>
+
+      <p class="auth-footer">
+        Ainda não tem conta?
+        <a href="/register">Criar conta</a>
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
