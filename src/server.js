@@ -278,6 +278,29 @@ app.get('/admin', requireAdmin, async (req, res) => {
     profit: db.prepare('SELECT COALESCE(SUM(profit_estimate),0) total FROM orders').get().total
   };
 
+  let providerBalance = {
+    balance: "Indisponível"
+  };
+
+  try {
+    const balance = await callSmm({ action: 'balance' });
+    providerBalance = balance;
+  } catch (e) {
+    console.log("Erro SMM:", e.message);
+  }
+
+  res.render('admin', {
+    stats,
+    providerBalance
+  });
+});
+  const stats = {
+    users: db.prepare('SELECT COUNT(*) total FROM users').get().total,
+    orders: db.prepare('SELECT COUNT(*) total FROM orders').get().total,
+    revenue: db.prepare('SELECT COALESCE(SUM(charge),0) total FROM orders').get().total,
+    profit: db.prepare('SELECT COALESCE(SUM(profit_estimate),0) total FROM orders').get().total
+  };
+
   let providerBalance = null;
 
   try {
