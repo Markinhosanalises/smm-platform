@@ -7,33 +7,79 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="auth-page">
-  <div class="auth-wrapper">
-    <div class="auth-left">
-      <span class="tag">Nova conta</span>
-      <h1>Crie sua conta e comece com uma estrutura <span class="highlight">profissional</span></h1>
-      <p>Tenha acesso a um painel simples para organizar solicitações digitais, saldo e histórico.</p>
-      <div class="auth-benefits">
-        <div>✔ Cadastro rápido</div>
-        <div>✔ Interface limpa</div>
-        <div>✔ Painel para clientes</div>
-        <div>✔ Pronto para revenda</div>
-      </div>
-    </div>
-    <div class="auth-card">
-      <h2>Criar conta</h2>
-      <p>Preencha os dados abaixo.</p>
-      <% if(error){ %><div class="alert"><%= error %></div><% } %>
-      <form method="post">
-        <label>Nome</label>
-        <input name="name" placeholder="Seu nome" required>
-        <label>E-mail</label>
-        <input name="email" type="email" placeholder="seu@email.com" required>
-        <label>Senha</label>
-        <input name="password" type="password" minlength="6" placeholder="Mínimo 6 caracteres" required>
-        <button class="btn-primary" style="width:100%">Criar conta</button>
-      </form>
-      <div class="auth-footer">Já tem conta? <a href="/login">Entrar</a></div>
+
+<div class="auth-wrapper">
+
+  <div class="auth-left">
+    <span class="tag">Nova conta</span>
+
+    <h1>
+      Crie sua conta e comece sua operação com uma estrutura
+      <span class="highlight">profissional</span>
+    </h1>
+
+    <p>
+      Organize solicitações, acompanhe histórico, controle saldo
+      e gerencie tudo em um painel simples e moderno.
+    </p>
+
+    <div class="auth-benefits">
+      <div>✔ Cadastro rápido e simples</div>
+      <div>✔ Painel completo para clientes</div>
+      <div>✔ Controle de saldo e solicitações</div>
+      <div>✔ Estrutura pronta para revenda</div>
     </div>
   </div>
+
+  <div class="auth-card">
+    <h2>Criar conta</h2>
+    <p>Preencha seus dados abaixo</p>
+
+    <% if(error){ %>
+      <div class="alert"><%= error %></div>
+    <% } %>
+
+    <form method="post">
+
+      <label>Nome completo</label>
+      <input name="name" placeholder="Digite seu nome" required>
+
+      <label>E-mail</label>
+      <input name="email" type="email" placeholder="Digite seu e-mail" required>
+
+      <label>WhatsApp</label>
+      <input name="whatsapp" placeholder="(00) 00000-0000" required>
+
+      <label>Senha</label>
+      <input
+        name="password"
+        type="password"
+        minlength="6"
+        placeholder="Mínimo 6 caracteres"
+        required
+      >
+
+      <label>Confirmar senha</label>
+      <input
+        name="confirm_password"
+        type="password"
+        minlength="6"
+        placeholder="Repita sua senha"
+        required
+      >
+
+      <button class="btn-primary" style="width:100%">
+        Criar conta
+      </button>
+
+    </form>
+
+    <div class="auth-footer">
+      Já possui conta? <a href="/login">Entrar</a>
+    </div>
+  </div>
+
+</div>
+
 </body>
 </html>
