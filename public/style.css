@@ -626,3 +626,31 @@ table td{
   margin:18px 0;
   font-size:14px;
 }
+.catalog-filters{
+  display:grid;
+  grid-template-columns:1fr 1fr 2fr;
+  gap:15px;
+  margin:25px 0;
+}
+
+.catalog-filters select,
+.catalog-filters input{
+  width:100%;
+  padding:14px 16px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  font-size:15px;
+  background:#fff;
+}
+
+.filter-count{
+  color:#64748b;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+@media(max-width:900px){
+  .catalog-filters{
+    grid-template-columns:1fr;
+  }
+}
