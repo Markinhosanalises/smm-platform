@@ -1,1 +1,158 @@
-<!doctype html><html><head><title>SMM Pro</title><link rel="stylesheet" href="/style.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><%- include('partials_header') %><section class="hero"><div><h1>Venda serviços digitais com saldo, painel e entrega automática.</h1><p>Plataforma pronta para vender serviços de marketing social com margem, revendedores, histórico e painel administrativo.</p><a class="btn" href="/register">Começar agora</a></div><div class="card"><h2>Como funciona</h2><p>1. Cliente cria conta<br>2. Adiciona saldo via Pix<br>3. Faz pedido<br>4. Sistema envia para o fornecedor SMM</p><p class="muted">Configure os IDs reais dos serviços no painel admin.</p></div></section><h2 class="container">Serviços disponíveis</h2><div class="grid"><% services.forEach(s=>{ %><div class="card"><span class="badge"><%=s.platform%></span><h3><%=s.name%></h3><p class="muted"><%=s.category%> • Min <%=s.min_qty%> / Max <%=s.max_qty%></p><div class="price"><%=money(s.price_per_1000)%> / 1000</div><p><%=s.description%></p><a class="btn" href="/order/<%=s.id%>">Comprar</a></div><% }) %></div></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fênix Social</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="container nav">
+    <div class="logo">
+      🔥 <span>Fênix Social</span>
+    </div>
+
+    <nav>
+      <a href="#solucoes">Soluções</a>
+      <a href="#beneficios">Benefícios</a>
+      <a href="#faq">FAQ</a>
+      <a href="/login" class="btn-outline">Entrar</a>
+      <a href="/register" class="btn-primary">Criar conta</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <p class="tag">PLATAFORMA DE GESTÃO DIGITAL</p>
+
+      <h1>
+        Organize e impulsione sua
+        presença online com a
+        <span>Fênix Social</span>
+      </h1>
+
+      <p class="hero-text">
+        Plataforma moderna para criadores, marcas e revendedores
+        gerenciarem crescimento digital, pedidos e estratégias
+        em um único painel.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="/register" class="btn-primary">Começar agora</a>
+        <a href="/login" class="btn-outline">Entrar</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-box">
+          <h3>+10.000</h3>
+          <p>Usuários ativos</p>
+        </div>
+
+        <div class="stat-box">
+          <h3>+500k</h3>
+          <p>Pedidos processados</p>
+        </div>
+
+        <div class="stat-box">
+          <h3>24/7</h3>
+          <p>Suporte disponível</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <h3>Painel inteligente</h3>
+      <ul>
+        <li>✔ Gestão centralizada</li>
+        <li>✔ Histórico completo</li>
+        <li>✔ Área para revendedores</li>
+        <li>✔ Controle financeiro</li>
+        <li>✔ Dashboard profissional</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="solucoes" class="section">
+  <div class="container">
+    <h2>Soluções inteligentes</h2>
+    <p>
+      Tudo o que você precisa para gerenciar sua operação digital.
+    </p>
+
+    <div class="cards-grid">
+      <div class="feature-card">
+        <h3>📊 Dashboard</h3>
+        <p>Controle pedidos, histórico e saldo.</p>
+      </div>
+
+      <div class="feature-card">
+        <h3>⚡ Automação</h3>
+        <p>Processos rápidos e organizados.</p>
+      </div>
+
+      <div class="feature-card">
+        <h3>🤝 Revendedores</h3>
+        <p>Estrutura escalável para crescimento.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="beneficios" class="section gray-bg">
+  <div class="container">
+    <h2>Por que escolher a Fênix Social?</h2>
+
+    <div class="cards-grid">
+      <div class="benefit-card">
+        <h3>Interface limpa</h3>
+        <p>Experiência rápida e organizada.</p>
+      </div>
+
+      <div class="benefit-card">
+        <h3>Alta performance</h3>
+        <p>Plataforma otimizada para velocidade.</p>
+      </div>
+
+      <div class="benefit-card">
+        <h3>Escalável</h3>
+        <p>Perfeito para clientes e revendedores.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="section">
+  <div class="container">
+    <h2>Perguntas frequentes</h2>
+
+    <div class="faq-box">
+      <h4>Como funciona?</h4>
+      <p>Crie sua conta, escolha sua solução e acompanhe pelo painel.</p>
+    </div>
+
+    <div class="faq-box">
+      <h4>Posso revender?</h4>
+      <p>Sim. A plataforma foi pensada para clientes e revendedores.</p>
+    </div>
+
+    <div class="faq-box">
+      <h4>Tenho suporte?</h4>
+      <p>Sim, suporte ativo para toda operação.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <strong>Fênix Social</strong>
+    <p>Soluções digitais para crescimento e gestão online.</p>
+  </div>
+</footer>
+
+</body>
+</html>
