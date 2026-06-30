@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><head><title>Serviços | Fênix Social</title><link rel="stylesheet" href="/style.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><%- include('partials_header') %>
+<main class="dashboard"><div class="container">
+<div class="dash-hero"><div><span class="tag">Admin</span><h1>Serviços</h1><p class="muted">Cadastre soluções e configure preço, custo e ID do fornecedor.</p></div><a class="btn-outline" href="/admin">Voltar</a></div>
+<div class="card"><h2>Novo serviço</h2><form method="post" action="/admin/services">
+<div class="dash-grid"><div><label>Nome</label><input name="name" placeholder="Nome" required></div><div><label>ID fornecedor</label><input name="provider_service_id" placeholder="ID do fornecedor"></div></div>
+<div class="dash-grid"><div><label>Plataforma</label><input name="platform" placeholder="Plataforma" required></div><div><label>Categoria</label><input name="category" placeholder="Categoria" required></div></div>
+<div class="dash-grid"><div><label>Mínimo</label><input name="min_qty" type="number" placeholder="Mínimo" required></div><div><label>Máximo</label><input name="max_qty" type="number" placeholder="Máximo" required></div></div>
+<div class="dash-grid"><div><label>Custo por 1000</label><input name="cost_per_1000" type="number" step="0.01" placeholder="Custo por 1000" required></div><div><label>Preço por 1000</label><input name="price_per_1000" type="number" step="0.01" placeholder="Preço por 1000" required></div></div>
+<label>Descrição</label><textarea name="description" placeholder="Descrição"></textarea><label><input type="checkbox" name="active" checked style="width:auto"> Ativo</label><br><br><button>Criar serviço</button></form></div>
+<% services.forEach(s=>{ %><div class="card" style="margin-top:18px"><form method="post" action="/admin/service/<%=s.id%>"><h3>#<%=s.id%> <%=s.name%></h3>
+<div class="dash-grid"><div><label>Nome</label><input name="name" value="<%=s.name%>"></div><div><label>ID fornecedor</label><input name="provider_service_id" value="<%=s.provider_service_id||''%>"></div></div>
+<div class="dash-grid"><div><label>Plataforma</label><input name="platform" value="<%=s.platform%>"></div><div><label>Categoria</label><input name="category" value="<%=s.category%>"></div></div>
+<div class="dash-grid"><div><label>Mínimo</label><input name="min_qty" type="number" value="<%=s.min_qty%>"></div><div><label>Máximo</label><input name="max_qty" type="number" value="<%=s.max_qty%>"></div></div>
+<div class="dash-grid"><div><label>Custo/1000</label><input name="cost_per_1000" type="number" step="0.01" value="<%=s.cost_per_1000%>"></div><div><label>Preço/1000</label><input name="price_per_1000" type="number" step="0.01" value="<%=s.price_per_1000%>"></div></div>
+<label>Descrição</label><textarea name="description"><%=s.description%></textarea><label><input type="checkbox" name="active" <%=s.active?'checked':''%> style="width:auto"> Ativo</label><br><br><button>Salvar</button></form></div><% }) %>
+</div></main></body></html>

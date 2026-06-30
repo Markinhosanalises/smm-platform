@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><title>Admin | Fênix Social</title><link rel="stylesheet" href="/style.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body><%- include('partials_header') %>
+<main class="dashboard"><div class="container">
+  <div class="dash-hero"><div><span class="tag">Admin</span><h1>Painel administrativo</h1><p class="muted">Controle usuários, serviços, pedidos e recargas.</p></div></div>
+  <div class="adminbar"><a class="btn-outline" href="/admin/services">Serviços</a><a class="btn-outline" href="/admin/orders">Pedidos</a><a class="btn-outline" href="/admin/deposits">Recargas</a><a class="btn-outline" href="/admin/users">Usuários</a></div>
+  <div class="kpis">
+    <div class="stat-card"><p>Usuários</p><h2><%=stats.users%></h2></div>
+    <div class="stat-card"><p>Pedidos</p><h2><%=stats.orders%></h2></div>
+    <div class="stat-card"><p>Faturado</p><h2><%=money(stats.revenue)%></h2></div>
+    <div class="stat-card"><p>Lucro estimado</p><h2><%=money(stats.profit)%></h2></div>
+  </div>
+  <div class="card"><h2>Saldo no fornecedor</h2><pre><%=JSON.stringify(providerBalance,null,2)%></pre></div>
+</div></main></body></html>
