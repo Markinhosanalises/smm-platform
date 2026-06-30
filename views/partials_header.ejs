@@ -1,19 +1,31 @@
 <header class="header">
-  <div class="container">
+  <div class="container nav">
+
     <a href="/" class="logo">🔥 <span>Fênix Social</span></a>
+
     <nav class="nav-links">
       <a href="/">Início</a>
+
       <% if(user){ %>
-        <a href="/dashboard">Minha conta</a>
-        <a href="/#solucoes">Soluções</a>
-        <% if(user.role === 'admin'){ %><a href="/admin">Admin</a><% } %>
+        <a href="/dashboard">Painel</a>
+        <a href="/dashboard#catalogo">Catálogo</a>
+        <a href="/dashboard#pedidos">Pedidos</a>
+
+        <% if(user.role === 'admin'){ %>
+          <a href="/admin">Admin</a>
+        <% } %>
+
         <a href="/logout" class="btn-outline">Sair</a>
+
       <% } else { %>
+
         <a href="/#solucoes">Soluções</a>
         <a href="/#como-funciona">Como funciona</a>
         <a href="/login">Entrar</a>
         <a href="/register" class="btn-primary">Criar conta</a>
+
       <% } %>
     </nav>
+
   </div>
 </header>
