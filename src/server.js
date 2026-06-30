@@ -35,6 +35,7 @@ app.use((req, res, next) => {
 try {
   const columns = db.prepare("PRAGMA table_info(users)").all();
   const hasWhatsapp = columns.some(c => c.name === 'whatsapp');
+
   if (!hasWhatsapp) {
     db.prepare("ALTER TABLE users ADD COLUMN whatsapp TEXT").run();
   }
@@ -53,13 +54,17 @@ function calcPrice(service, qty, user) {
 }
 
 function getUserRole(user) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@sualoja.com';
-  if (user.email === adminEmail) return 'admin';
-  return user.role;
+  const adminEmail = process.env.ADMIN_EMAIL || '';
+  if (adminEmail && user.email === adminEmail) return 'admin';
+  if (user.role === 'admin') return 'admin';
+  return user.role || 'user';
 }
 
 app.get('/', (req, res) => {
-  const services = db.prepare('SELECT * FROM services WHERE active=1 ORDER BY platform,category,name').all();
+  const services = db
+    .prepare('SELECT * FROM services WHERE active=1 ORDER BY platform, category, name')
+    .all();
+
   res.render('home', { services });
 });
 
@@ -75,16 +80,17 @@ app.post('/login', (req, res) => {
   }
 
   req.session.user = {
-  id: u.id,
-  name: u.name,
-  email: u.email,
-  role: 'admin',
-  balance: u.balance,
-  reseller: u.reseller
-};
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: getUserRole(u),
+    balance: u.balance,
+    reseller: u.reseller
+  };
 
-req.session.save(() => {
-  res.redirect('/dashboard');
+  req.session.save(() => {
+    res.redirect('/dashboard');
+  });
 });
 
 app.get('/register', (req, res) => {
@@ -147,16 +153,18 @@ app.get('/dashboard', requireAuth, (req, res) => {
   `).all(user.id);
 
   const deposits = db.prepare(`
-    SELECT * FROM deposits
+    SELECT *
+    FROM deposits
     WHERE user_id=?
     ORDER BY id DESC
     LIMIT 20
   `).all(user.id);
 
   const services = db.prepare(`
-    SELECT * FROM services
+    SELECT *
+    FROM services
     WHERE active=1
-    ORDER BY platform,category,name
+    ORDER BY platform, category, name
     LIMIT 60
   `).all();
 
@@ -184,15 +192,27 @@ app.post('/deposit', requireAuth, (req, res) => {
 });
 
 app.get('/order/:id', requireAuth, (req, res) => {
-  const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
+  const service = db
+    .prepare('SELECT * FROM services WHERE id=? AND active=1')
+    .get(req.params.id);
+
   if (!service) return res.redirect('/dashboard');
 
-  res.render('order', { service, price: null, error: null });
+  res.render('order', {
+    service,
+    price: null,
+    error: null
+  });
 });
 
 app.post('/order/:id', requireAuth, async (req, res) => {
-  const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
-  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.user.id);
+  const service = db
+    .prepare('SELECT * FROM services WHERE id=? AND active=1')
+    .get(req.params.id);
+
+  const user = db
+    .prepare('SELECT * FROM users WHERE id=?')
+    .get(req.session.user.id);
 
   if (!service) return res.redirect('/dashboard');
 
@@ -202,11 +222,19 @@ app.post('/order/:id', requireAuth, async (req, res) => {
   const cost = (service.cost_per_1000 * qty) / 1000;
 
   if (!link || qty < service.min_qty || qty > service.max_qty) {
-    return res.render('order', { service, price: charge, error: 'Confira link e quantidade.' });
+    return res.render('order', {
+      service,
+      price: charge,
+      error: 'Confira link e quantidade.'
+    });
   }
 
   if (user.balance < charge) {
-    return res.render('order', { service, price: charge, error: 'Saldo insuficiente. Faça uma recarga primeiro.' });
+    return res.render('order', {
+      service,
+      price: charge,
+      error: 'Saldo insuficiente. Faça uma recarga primeiro.'
+    });
   }
 
   let status = 'processing';
@@ -234,12 +262,21 @@ app.post('/order/:id', requireAuth, async (req, res) => {
   }
 
   const tx = db.transaction(() => {
-    db.prepare('UPDATE users SET balance=balance-? WHERE id=?').run(charge, user.id);
+    db.prepare('UPDATE users SET balance=balance-? WHERE id=?')
+      .run(charge, user.id);
 
     db.prepare(`
       INSERT INTO orders(
-        user_id, service_id, provider_order_id, link, quantity,
-        charge, cost_estimate, profit_estimate, status, error
+        user_id,
+        service_id,
+        provider_order_id,
+        link,
+        quantity,
+        charge,
+        cost_estimate,
+        profit_estimate,
+        status,
+        error
       )
       VALUES(?,?,?,?,?,?,?,?,?,?)
     `).run(
@@ -265,7 +302,11 @@ app.post('/ticket', requireAuth, (req, res) => {
   db.prepare(`
     INSERT INTO tickets(user_id, subject, message)
     VALUES(?, ?, ?)
-  `).run(req.session.user.id, req.body.subject, req.body.message);
+  `).run(
+    req.session.user.id,
+    req.body.subject,
+    req.body.message
+  );
 
   res.redirect('/dashboard');
 });
@@ -278,38 +319,18 @@ app.get('/admin', requireAdmin, async (req, res) => {
     profit: db.prepare('SELECT COALESCE(SUM(profit_estimate),0) total FROM orders').get().total
   };
 
-  let providerBalance = {
-    balance: "Indisponível"
-  };
+  let providerBalance = { balance: 'Indisponível' };
 
   try {
-    const balance = await callSmm({ action: 'balance' });
-    providerBalance = balance;
+    providerBalance = await callSmm({ action: 'balance' });
   } catch (e) {
-    console.log("Erro SMM:", e.message);
+    console.log('Erro SMM:', e.message);
   }
 
   res.render('admin', {
     stats,
     providerBalance
   });
-});
-  const stats = {
-    users: db.prepare('SELECT COUNT(*) total FROM users').get().total,
-    orders: db.prepare('SELECT COUNT(*) total FROM orders').get().total,
-    revenue: db.prepare('SELECT COALESCE(SUM(charge),0) total FROM orders').get().total,
-    profit: db.prepare('SELECT COALESCE(SUM(profit_estimate),0) total FROM orders').get().total
-  };
-
-  let providerBalance = null;
-
-  try {
-    providerBalance = await callSmm({ action: 'balance' });
-  } catch (e) {
-    providerBalance = { error: e.message };
-  }
-
-  res.render('admin', { stats, providerBalance });
 });
 
 app.get('/admin/services', requireAdmin, (req, res) => {
@@ -323,9 +344,16 @@ app.post('/admin/services', requireAdmin, (req, res) => {
 
   db.prepare(`
     INSERT INTO services(
-      provider_service_id, name, category, platform,
-      min_qty, max_qty, cost_per_1000, price_per_1000,
-      description, active
+      provider_service_id,
+      name,
+      category,
+      platform,
+      min_qty,
+      max_qty,
+      cost_per_1000,
+      price_per_1000,
+      description,
+      active
     )
     VALUES(?,?,?,?,?,?,?,?,?,?)
   `).run(
@@ -414,8 +442,14 @@ app.post('/admin/deposit/:id/approve', requireAdmin, (req, res) => {
 
   if (d && d.status === 'pending') {
     const tx = db.transaction(() => {
-      db.prepare('UPDATE deposits SET status="approved", approved_at=CURRENT_TIMESTAMP WHERE id=?').run(d.id);
-      db.prepare('UPDATE users SET balance=balance+? WHERE id=?').run(d.amount, d.user_id);
+      db.prepare(`
+        UPDATE deposits
+        SET status="approved", approved_at=CURRENT_TIMESTAMP
+        WHERE id=?
+      `).run(d.id);
+
+      db.prepare('UPDATE users SET balance=balance+? WHERE id=?')
+        .run(d.amount, d.user_id);
     });
 
     tx();
@@ -425,7 +459,9 @@ app.post('/admin/deposit/:id/approve', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/deposit/:id/reject', requireAdmin, (req, res) => {
-  db.prepare('UPDATE deposits SET status="rejected" WHERE id=?').run(req.params.id);
+  db.prepare('UPDATE deposits SET status="rejected" WHERE id=?')
+    .run(req.params.id);
+
   res.redirect('/admin/deposits');
 });
 
