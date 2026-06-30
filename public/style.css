@@ -439,3 +439,32 @@ table td{
     align-items:flex-start;
   }
 }
+.auth-card form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.auth-card label{
+  font-weight:700;
+  color:#334155;
+}
+
+.auth-card input{
+  width:100%;
+  padding:14px 16px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  font-size:15px;
+}
+
+.auth-card button{
+  width:100%;
+  margin-top:10px;
+}
+
+.hero{
+  min-height:calc(100vh - 90px);
+  display:flex;
+  align-items:center;
+}
