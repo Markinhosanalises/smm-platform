@@ -32,7 +32,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// garante coluna whatsapp se ainda não existir
 try {
   const columns = db.prepare("PRAGMA table_info(users)").all();
   const hasWhatsapp = columns.some(c => c.name === 'whatsapp');
@@ -53,11 +52,14 @@ function calcPrice(service, qty, user) {
   return Math.max(0.01, Number(price.toFixed(2)));
 }
 
-app.get('/', (req, res) => {
-  const services = db
-    .prepare('SELECT * FROM services WHERE active=1 ORDER BY platform,category,name')
-    .all();
+function getUserRole(user) {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@sualoja.com';
+  if (user.email === adminEmail) return 'admin';
+  return user.role;
+}
 
+app.get('/', (req, res) => {
+  const services = db.prepare('SELECT * FROM services WHERE active=1 ORDER BY platform,category,name').all();
   res.render('home', { services });
 });
 
@@ -76,7 +78,7 @@ app.post('/login', (req, res) => {
     id: u.id,
     name: u.name,
     email: u.email,
-    role: u.role,
+    role: getUserRole(u),
     balance: u.balance,
     reseller: u.reseller
   };
@@ -129,7 +131,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: getUserRole(user),
     balance: user.balance,
     reseller: user.reseller
   };
@@ -182,14 +184,9 @@ app.post('/deposit', requireAuth, (req, res) => {
 
 app.get('/order/:id', requireAuth, (req, res) => {
   const service = db.prepare('SELECT * FROM services WHERE id=? AND active=1').get(req.params.id);
-
   if (!service) return res.redirect('/dashboard');
 
-  res.render('order', {
-    service,
-    price: null,
-    error: null
-  });
+  res.render('order', { service, price: null, error: null });
 });
 
 app.post('/order/:id', requireAuth, async (req, res) => {
@@ -204,19 +201,11 @@ app.post('/order/:id', requireAuth, async (req, res) => {
   const cost = (service.cost_per_1000 * qty) / 1000;
 
   if (!link || qty < service.min_qty || qty > service.max_qty) {
-    return res.render('order', {
-      service,
-      price: charge,
-      error: 'Confira link e quantidade.'
-    });
+    return res.render('order', { service, price: charge, error: 'Confira link e quantidade.' });
   }
 
   if (user.balance < charge) {
-    return res.render('order', {
-      service,
-      price: charge,
-      error: 'Saldo insuficiente. Faça uma recarga primeiro.'
-    });
+    return res.render('order', { service, price: charge, error: 'Saldo insuficiente. Faça uma recarga primeiro.' });
   }
 
   let status = 'processing';
@@ -296,10 +285,7 @@ app.get('/admin', requireAdmin, async (req, res) => {
     providerBalance = { error: e.message };
   }
 
-  res.render('admin', {
-    stats,
-    providerBalance
-  });
+  res.render('admin', { stats, providerBalance });
 });
 
 app.get('/admin/services', requireAdmin, (req, res) => {
