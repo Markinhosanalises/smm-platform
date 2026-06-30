@@ -468,3 +468,58 @@ table td{
   display:flex;
   align-items:center;
 }
+.premium-card form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.premium-card label{
+  font-weight:700;
+  color:#334155;
+}
+
+.premium-card input{
+  width:100%;
+  padding:14px 16px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  font-size:15px;
+}
+
+.premium-card button{
+  margin-top:10px;
+}
+
+.summary-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 0;
+  border-bottom:1px solid #e2e8f0;
+}
+
+.summary-line span{
+  color:#64748b;
+}
+
+.summary-total{
+  margin-top:20px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  padding:18px;
+  border-radius:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.summary-total strong{
+  color:#2563eb;
+  font-size:22px;
+}
+
+.small-text{
+  font-size:13px;
+  margin-top:15px;
+}
