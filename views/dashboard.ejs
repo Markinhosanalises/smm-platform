@@ -7,8 +7,10 @@
 </head>
 <body>
 <%- include('partials_header') %>
+
 <main class="dashboard">
   <div class="container">
+
     <div class="dash-hero">
       <div>
         <span class="tag">Painel do cliente</span>
@@ -28,24 +30,28 @@
     <div class="dash-grid">
       <section class="card premium-card">
         <h2>Adicionar saldo via Pix</h2>
-        <p class="muted">Solicite uma recarga e envie a identificação do pagamento. Após aprovação, o saldo entra na sua conta.</p>
+        <p class="muted">Solicite uma recarga e envie a identificação do pagamento.</p>
         <form method="post" action="/deposit">
           <label>Valor da recarga</label>
-          <input name="amount" type="number" min="10" step="0.01" placeholder="Ex: 50.00" required>
+          <input name="amount" type="number" min="1" step="0.01" placeholder="Ex: 5.00" required>
+
           <label>Comprovante ou observação</label>
           <input name="proof" placeholder="Ex: Pix feito em nome de...">
+
           <button class="btn-primary">Solicitar recarga</button>
         </form>
       </section>
 
       <section class="card premium-card">
         <h2>Suporte</h2>
-        <p class="muted">Precisa de ajuda? Abra um chamado e acompanhe o retorno pelo painel.</p>
+        <p class="muted">Precisa de ajuda? Abra um chamado.</p>
         <form method="post" action="/ticket">
           <label>Assunto</label>
           <input name="subject" placeholder="Ex: Dúvida sobre pedido" required>
+
           <label>Mensagem</label>
           <textarea name="message" placeholder="Descreva sua dúvida..." required></textarea>
+
           <button class="btn-primary">Abrir chamado</button>
         </form>
       </section>
@@ -53,30 +59,67 @@
 
     <section class="card table-card" id="catalogo">
       <div class="table-head">
-        <div><h2>Catálogo de soluções</h2><p class="muted">Escolha uma solução para abrir uma nova solicitação.</p></div>
+        <div>
+          <h2>Catálogo de soluções</h2>
+          <p class="muted">Use os filtros para encontrar rapidamente o serviço ideal.</p>
+        </div>
       </div>
-      <div class="service-grid">
+
+      <div class="catalog-filters">
+        <select id="filterPlatform">
+          <option value="">Todas as redes</option>
+        </select>
+
+        <select id="filterCategory">
+          <option value="">Todos os tipos</option>
+        </select>
+
+        <input id="filterSearch" type="text" placeholder="Buscar por nome, país, qualidade...">
+      </div>
+
+      <div id="filterCount" class="filter-count"></div>
+
+      <div class="service-grid" id="serviceGrid">
         <% (services || []).forEach(s=>{ %>
-          <div class="card service-card">
+          <div
+            class="card service-card"
+            data-platform="<%= (s.platform || '').toLowerCase() %>"
+            data-category="<%= (s.category || '').toLowerCase() %>"
+            data-name="<%= (s.name || '').toLowerCase() %>"
+          >
             <span class="platform"><%= s.platform %> • <%= s.category %></span>
             <h3><%= s.name %></h3>
             <p><%= s.description || 'Solução disponível para solicitação pelo painel.' %></p>
-            <div class="price-line"><span><%= money(s.price_per_1000) %>/1000</span><a class="btn-primary" href="/order/<%= s.id %>">Solicitar</a></div>
+
+            <div class="price-line">
+              <span><%= money(s.price_per_1000) %>/1000</span>
+              <a class="btn-primary" href="/order/<%= s.id %>">Solicitar</a>
+            </div>
           </div>
         <% }) %>
-        <% if(!services || services.length === 0){ %><div class="empty">Nenhuma solução ativa no momento.</div><% } %>
+
+        <% if(!services || services.length === 0){ %>
+          <div class="empty">Nenhuma solução ativa no momento.</div>
+        <% } %>
       </div>
     </section>
 
     <section class="card table-card" id="pedidos">
       <div class="table-head">
-        <div><h2>Pedidos recentes</h2><p class="muted">Acompanhe suas últimas solicitações.</p></div>
-        <a href="/" class="btn-outline">Ver soluções</a>
+        <div>
+          <h2>Pedidos recentes</h2>
+          <p class="muted">Acompanhe suas últimas solicitações.</p>
+        </div>
       </div>
+
       <div class="table-wrap">
         <table class="table">
           <tr><th>ID</th><th>Serviço</th><th>Qtd</th><th>Valor</th><th>Status</th></tr>
-          <% if(orders.length === 0){ %><tr><td colspan="5" class="empty">Nenhum pedido encontrado.</td></tr><% } %>
+
+          <% if(orders.length === 0){ %>
+            <tr><td colspan="5" class="empty">Nenhum pedido encontrado.</td></tr>
+          <% } %>
+
           <% orders.forEach(o=>{ %>
             <tr>
               <td>#<%= o.id %></td>
@@ -91,18 +134,87 @@
     </section>
 
     <section class="card table-card">
-      <div class="table-head"><div><h2>Recargas</h2><p class="muted">Histórico das solicitações de saldo.</p></div></div>
+      <div class="table-head">
+        <div>
+          <h2>Recargas</h2>
+          <p class="muted">Histórico das solicitações de saldo.</p>
+        </div>
+      </div>
+
       <div class="table-wrap">
         <table class="table">
           <tr><th>ID</th><th>Valor</th><th>Status</th><th>Data</th></tr>
-          <% if(deposits.length === 0){ %><tr><td colspan="4" class="empty">Nenhuma recarga encontrada.</td></tr><% } %>
+
+          <% if(deposits.length === 0){ %>
+            <tr><td colspan="4" class="empty">Nenhuma recarga encontrada.</td></tr>
+          <% } %>
+
           <% deposits.forEach(d=>{ %>
-            <tr><td>#<%= d.id %></td><td><%= money(d.amount) %></td><td><span class="status-badge <%= d.status %>"><%= d.status %></span></td><td><%= d.created_at %></td></tr>
+            <tr>
+              <td>#<%= d.id %></td>
+              <td><%= money(d.amount) %></td>
+              <td><span class="status-badge <%= d.status %>"><%= d.status %></span></td>
+              <td><%= d.created_at %></td>
+            </tr>
           <% }) %>
         </table>
       </div>
     </section>
+
   </div>
 </main>
+
+<script>
+  const cards = Array.from(document.querySelectorAll(".service-card"));
+  const platformSelect = document.getElementById("filterPlatform");
+  const categorySelect = document.getElementById("filterCategory");
+  const searchInput = document.getElementById("filterSearch");
+  const countBox = document.getElementById("filterCount");
+
+  const platforms = [...new Set(cards.map(card => card.dataset.platform).filter(Boolean))].sort();
+  const categories = [...new Set(cards.map(card => card.dataset.category).filter(Boolean))].sort();
+
+  platforms.forEach(platform => {
+    const option = document.createElement("option");
+    option.value = platform;
+    option.textContent = platform.charAt(0).toUpperCase() + platform.slice(1);
+    platformSelect.appendChild(option);
+  });
+
+  categories.forEach(category => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    categorySelect.appendChild(option);
+  });
+
+  function applyFilters() {
+    const platform = platformSelect.value;
+    const category = categorySelect.value;
+    const search = searchInput.value.toLowerCase().trim();
+
+    let visible = 0;
+
+    cards.forEach(card => {
+      const matchPlatform = !platform || card.dataset.platform === platform;
+      const matchCategory = !category || card.dataset.category === category;
+      const matchSearch = !search || card.dataset.name.includes(search);
+
+      const show = matchPlatform && matchCategory && matchSearch;
+      card.style.display = show ? "flex" : "none";
+
+      if (show) visible++;
+    });
+
+    countBox.textContent = visible + " resultado(s) encontrado(s)";
+  }
+
+  platformSelect.addEventListener("change", applyFilters);
+  categorySelect.addEventListener("change", applyFilters);
+  searchInput.addEventListener("input", applyFilters);
+
+  applyFilters();
+</script>
+
 </body>
 </html>
