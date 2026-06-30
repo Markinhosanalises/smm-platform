@@ -610,3 +610,19 @@ table td{
     align-items:flex-start;
   }
 }
+.adminbar{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:30px;
+}
+
+.code-box{
+  background:#0f172a;
+  color:#dbeafe;
+  padding:18px;
+  border-radius:14px;
+  overflow:auto;
+  margin:18px 0;
+  font-size:14px;
+}
